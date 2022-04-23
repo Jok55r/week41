@@ -12,10 +12,8 @@ namespace week41
         static int playerX = 1;
         static int playerY = 1;
 
-        static int coin = 0;
-        static int maxCoin = 0;
         static int moves = 0;
-        static int breaks = 3;
+        static int breaks = 1;
 
         static char wall = '█';
         static char space = ' ';
@@ -42,7 +40,7 @@ namespace week41
                     if (i == 0 || j == 0 || i == height || j == width) maze[i, j] = wall;
                     else if (i == height - 1 && j == width - 1) maze[i, j] = 'W';
                     else if (rnd.Next(0, 4) == 1 && (i != 1 || j != 1)) maze[i, j] = wall;
-                    else if (rnd.Next(0, 100) == 1) { maze[i, j] = 'C'; maxCoin++; }
+                    else if (rnd.Next(0, 100) == 1) { maze[i, j] = 'C'; }
                     else maze[i, j] = space;
                 }
             }
@@ -57,9 +55,8 @@ namespace week41
                     if (i == playerY && j == playerX) Console.Write('@');
                     else Console.Write(maze[i, j]);
                 }
-                if (i == 0) Console.Write($"     coins: {coin}/{maxCoin}");
-                if (i == 1) Console.Write($"     moves: {moves}");
-                if (i == 2) Console.Write($"     breaks left: {breaks}");
+                if (i == 0) Console.Write($"     moves: {moves}");
+                if (i == 1) Console.Write($"     breaks left: {breaks}");
 
                 Console.WriteLine();
             }
@@ -73,7 +70,7 @@ namespace week41
             if (maze[playerY, playerX] == 'C')
             {
                 maze[playerY, playerX] = ' ';
-                coin++;
+                breaks++;
             }
         }
 
@@ -90,10 +87,8 @@ namespace week41
         {
             playerX = 1;
             playerY = 1;
-            maxCoin = 0;
-            coin = 0;
             moves = 0;
-            breaks = 3;
+            breaks = 1;
             MakeMaze();
         }
 
