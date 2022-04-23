@@ -1,84 +1,85 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace week41
 {
     internal class Program
     {
-        static int wide = 50;
-        static int hight = 20;
+        static int width = 60;
+        static int height = 25;
 
-        static char[,] lab = new char[hight + 1, wide + 1];
+        static char[,] maze = new char[height + 1, width + 1];
 
-        static int x = 1;
-        static int y = 1;
+        static int playerX = 1;
+        static int playerY = 1;
 
         static int coin = 0;
         static int maxCoin = 0;
         static int moves = 0;
+        static int breaks = 3;
+
+        static char wall = '█';
+        static char space = ' ';
 
         static void Main(string[] args)
         {
-            Make();
+            MakeMaze();
             for(; ; )
             {
-                Draw();
-                Movement();
+                DrawMaze();
+                MovementInput();
                 Console.Clear();
-                CheckIfCoin();
-                CheckIfWin();
+                PickCoin();
+                WinCheck();
             }
         }
-
-        static void Make()
+        static void MakeMaze()
         {
             Random rnd = new Random();
-            for (int i = 0; i <= hight; i++)
+            for (int i = 0; i <= height; i++)
             {
-                for (int j = 0; j <= wide; j++)
+                for (int j = 0; j <= width; j++)
                 {
-                    if (i == 0 || j == 0 || i == hight || j == wide) lab[i, j] = '█';
-                    else if (i == hight - 1 && j == wide - 1) lab[i, j] = 'W';
-                    else if (rnd.Next(0, 100) == 1) { lab[i, j] = 'C'; maxCoin++; }
-                    else if (rnd.Next(0, 4) == 1) lab[i, j] = '█';
-                    else lab[i, j] = ' ';
+                    if (i == 0 || j == 0 || i == height || j == width) maze[i, j] = wall;
+                    else if (i == height - 1 && j == width - 1) maze[i, j] = 'W';
+                    else if (rnd.Next(0, 4) == 1 && (i != 1 || j != 1)) maze[i, j] = wall;
+                    else if (rnd.Next(0, 100) == 1) { maze[i, j] = 'C'; maxCoin++; }
+                    else maze[i, j] = space;
                 }
             }
         }
 
-        static void Draw()
+        static void DrawMaze()
         {
-            for (int i = 0; i <= hight; i++)
+            for (int i = 0; i <= height; i++)
             {
-                for (int j = 0; j <= wide; j++)
+                for (int j = 0; j <= width; j++)
                 {
-                    if (i == y && j == x) Console.Write('@');
-                    else Console.Write(lab[i, j]);
+                    if (i == playerY && j == playerX) Console.Write('@');
+                    else Console.Write(maze[i, j]);
                 }
                 if (i == 0) Console.Write($"     coins: {coin}/{maxCoin}");
                 if (i == 1) Console.Write($"     moves: {moves}");
+                if (i == 2) Console.Write($"     breaks left: {breaks}");
 
                 Console.WriteLine();
             }
             Console.WriteLine("WASD - movement");
             Console.WriteLine("R - restart");
+            Console.WriteLine("arrows - break wall");
         }
 
-        static void CheckIfCoin()
+        static void PickCoin()
         {
-            if (lab[y, x] == 'C')
+            if (maze[playerY, playerX] == 'C')
             {
-                lab[y, x] = ' ';
+                maze[playerY, playerX] = ' ';
                 coin++;
             }
         }
 
-        static void CheckIfWin()
+        static void WinCheck()
         {
-            if (x == wide - 1 && y == hight - 1)
+            if (playerX == width - 1 && playerY == height - 1)
             {
                 Console.WriteLine("---Yay, you win!---");
                 Restart();
@@ -87,33 +88,53 @@ namespace week41
 
         static void Restart()
         {
-            Make();
-            x = 1;
-            y = 1;
+            playerX = 1;
+            playerY = 1;
             maxCoin = 0;
             coin = 0;
             moves = 0;
+            breaks = 3;
+            MakeMaze();
         }
 
-        static void Movement()
+        static void MovementInput()
         {
+            moves++;
             ConsoleKey input = Console.ReadKey(true).Key;
             if (input == ConsoleKey.R) Restart();
-            if (input == ConsoleKey.S) {y++; CheckIfCanMove(true, true); }
-            if (input == ConsoleKey.W) {y--; CheckIfCanMove(true, false); }
-            if (input == ConsoleKey.A) {x--; CheckIfCanMove(false, false); }
-            if (input == ConsoleKey.D) {x++; CheckIfCanMove(false, true); }
-            moves++;
+            CanBreakCheck(input);
+            MovingIfCan(input);
         }
 
-        static void CheckIfCanMove(bool isY, bool plus)
+        static void MovingIfCan(ConsoleKey input)
         {
-            if (lab[y, x] == '█')
+            if ((input == ConsoleKey.A || input == ConsoleKey.LeftArrow) && maze[playerY, playerX - 1] != wall) playerX--;
+            if ((input == ConsoleKey.D || input == ConsoleKey.RightArrow) && maze[playerY, playerX + 1] != wall) playerX++;
+            if ((input == ConsoleKey.S || input == ConsoleKey.DownArrow) && maze[playerY + 1, playerX] != wall) playerY++;
+            if ((input == ConsoleKey.W || input == ConsoleKey.UpArrow) && maze[playerY - 1, playerX] != wall) playerY--;
+        }
+
+        static void CanBreakCheck(ConsoleKey input)
+        {
+            if (input == ConsoleKey.LeftArrow && maze[playerY, playerX - 1] == wall && breaks >= 1) 
+            { 
+                maze[playerY, playerX - 1] = space; 
+                breaks--; 
+            }
+            if (input == ConsoleKey.RightArrow && maze[playerY, playerX + 1] == wall && breaks >= 1)
             {
-                if (plus && isY) y--;
-                if (!plus && isY) y++;
-                if (!plus && !isY) x++;
-                if (plus && !isY) x--;
+                maze[playerY, playerX + 1] = space;
+                breaks--;
+            }
+            if (input == ConsoleKey.DownArrow && maze[playerY + 1, playerX] == wall && breaks >= 1)
+            {
+                maze[playerY + 1, playerX] = space;
+                breaks--;
+            }
+            if (input == ConsoleKey.UpArrow && maze[playerY - 1, playerX] == wall && breaks >= 1)
+            {
+                maze[playerY - 1, playerX] = space;
+                breaks--;
             }
         }
     }
